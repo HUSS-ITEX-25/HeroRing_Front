@@ -1,20 +1,42 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Image } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Image, Modal, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { User, Bell, Settings, Shield, Heart, CircleHelp as HelpCircle, ChevronRight } from 'lucide-react-native';
 import HeaderBar from '@/components/HeaderBar';
 import { useTheme } from '@/contexts/ThemeContext';
 import Colors from '@/constants/Colors';
+import React, { useState } from 'react';
+import { Keyboard, TouchableWithoutFeedback } from 'react-native';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { theme, toggleTheme } = useTheme();
   const colors = Colors[theme];
-  
+
+  const [contacts, setContacts] = useState([
+    { id: 1, name: 'Mom', phone: '010-1234-5678' },
+    { id: 2, name: 'Dad', phone: '010-8765-4321' }
+  ]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+
+  const addContact = () => {
+    const id = new Date().getTime();
+    setContacts([...contacts, { id, name: newName || `Contact ${id}`, phone: newPhone || '000-0000-0000' }]);
+    setNewName('');
+    setNewPhone('');
+    setModalVisible(false);
+  };
+
+  const removeContact = (id) => {
+    setContacts(contacts.filter(contact => contact.id !== id));
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <HeaderBar title="Profile" />
-      
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -29,12 +51,12 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.profileName}>John Doe</Text>
           <Text style={styles.profileEmail}>john.doe@example.com</Text>
-          
+
           <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
         </Animated.View>
-        
+
         <Animated.View entering={FadeInUp.delay(200).duration(400)}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Health Information</Text>
           <View style={styles.card}>
@@ -47,21 +69,67 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={20} color="#999" />
             </TouchableOpacity>
-            
+
             <View style={styles.separator} />
-            
-            <TouchableOpacity style={styles.cardItem}>
-              <View style={styles.cardItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: '#4CAF50' + '20' }]}>
-                  <User size={20} color="#4CAF50" />
+
+            <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={styles.cardItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: '#4CAF50' + '20' }]}>
+                    <User size={20} color="#4CAF50" />
+                  </View>
+                  <Text style={[styles.cardItemText, { color: colors.text }]}>Emergency Contacts</Text>
                 </View>
-                <Text style={[styles.cardItemText, { color: colors.text }]}>Emergency Contacts</Text>
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                  <Text style={{ color: colors.primary, fontWeight: '600' }}>+ Add</Text>
+                </TouchableOpacity>
               </View>
-              <ChevronRight size={20} color="#999" />
+
+              {contacts.map((contact) => (
+                <View key={contact.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                  <Text style={{ color: colors.text }}>{contact.name} - {contact.phone}</Text>
+                  <TouchableOpacity onPress={() => removeContact(contact.id)}>
+                    <Text style={{ color: '#F44336', fontWeight: '600' }}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+  <Modal visible={modalVisible} transparent animationType="slide">
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ width: '80%', backgroundColor: 'white', borderRadius: 12, padding: 20 }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>Add Contact</Text>
+  
+          <TextInput
+            placeholder="Name"
+            value={newName}
+            onChangeText={setNewName}
+            style={{ borderBottomWidth: 1, borderColor: '#ccc', marginBottom: 12, paddingVertical: 4 }}
+          />
+          <TextInput
+            placeholder="Phone Number"
+            value={newPhone}
+            onChangeText={setNewPhone}
+            keyboardType="phone-pad"
+            style={{ borderBottomWidth: 1, borderColor: '#ccc', marginBottom: 20, paddingVertical: 4 }}
+          />
+  
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={{ color: '#999', fontSize: 16 }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={addContact}>
+              <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 16 }}>Save</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </View>
+    </TouchableWithoutFeedback>
+  </Modal>
+            </View>
+          </View>
         </Animated.View>
-        
+
         <Animated.View entering={FadeInUp.delay(300).duration(400)}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences</Text>
           <View style={styles.card}>
@@ -76,12 +144,12 @@ export default function ProfileScreen() {
                 value={true}
                 trackColor={{ false: '#D1D1D6', true: colors.primary + '90' }}
                 thumbColor={true ? colors.primary : '#F4F3F4'}
-                onValueChange={() => {}}
+                onValueChange={() => { }}
               />
             </View>
-            
+
             <View style={styles.separator} />
-            
+
             <View style={styles.cardItem}>
               <View style={styles.cardItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: '#9C27B0' + '20' }]}>
@@ -98,7 +166,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         </Animated.View>
-        
+
         <Animated.View entering={FadeInUp.delay(400).duration(400)}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
           <View style={styles.card}>
@@ -111,9 +179,9 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={20} color="#999" />
             </TouchableOpacity>
-            
+
             <View style={styles.separator} />
-            
+
             <TouchableOpacity style={styles.cardItem}>
               <View style={styles.cardItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: '#F44336' + '20' }]}>
@@ -125,11 +193,11 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </Animated.View>
-        
+
         <TouchableOpacity style={styles.logoutButton}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
-        
+
         <Text style={styles.versionText}>Version 1.0.0</Text>
       </ScrollView>
     </View>

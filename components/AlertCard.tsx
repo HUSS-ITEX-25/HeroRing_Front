@@ -3,6 +3,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } fr
 import { TriangleAlert as AlertTriangle, BellRing, X, Info as InfoIcon } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Colors from '@/constants/Colors';
+import { Audio } from 'expo-av';
+import React, { useEffect } from 'react';
 
 interface AlertCardProps {
   type: 'drowsiness' | 'health' | null;
@@ -14,25 +16,47 @@ export default function AlertCard({ type, onDismiss, onMoreInfo }: AlertCardProp
   const { theme } = useTheme();
   const colors = Colors[theme];
   const pulseValue = useSharedValue(1);
-  
-  pulseValue.value = withRepeat(
-    withTiming(1.05, { duration: 700 }),
-    -1,
-    true
-  );
-  
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: pulseValue.value }],
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseValue.value }],
+  }));
+
+  useEffect(() => {
+    pulseValue.value = withRepeat(withTiming(1.05, { duration: 700 }), -1, true);
+  }, []);
+
+  useEffect(() => {
+    let sound: Audio.Sound;
+
+    const playSiren = async () => {
+      if (type === 'health') {
+        try {
+          const { sound: loadedSound } = await Audio.Sound.createAsync(
+            require('@/assets/sounds/siren.mp3')
+          );
+          sound = loadedSound;
+          await sound.playAsync();
+        } catch (error) {
+          console.warn('Siren sound failed to play:', error);
+        }
+      }
     };
-  });
-  
+
+    playSiren();
+
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [type]);
+
   const getAlertBgColor = () => {
     if (type === 'drowsiness') return colors.warning;
     if (type === 'health') return colors.error;
     return colors.primary;
   };
-  
+
   const getAlertIcon = () => {
     if (type === 'drowsiness') {
       return <BellRing size={24} color="#FFFFFF" />;
@@ -41,27 +65,27 @@ export default function AlertCard({ type, onDismiss, onMoreInfo }: AlertCardProp
     }
     return null;
   };
-  
+
   const getAlertTitle = () => {
     if (type === 'drowsiness') return 'Drowsiness Detected';
     if (type === 'health') return 'Health Alert';
     return 'Alert';
   };
-  
+
   const getAlertDescription = () => {
     if (type === 'drowsiness') {
       return 'You appear to be showing signs of drowsiness. Please take a break.';
     } else if (type === 'health') {
-      return 'Potential health issue detected. Consider pulling over safely.';
+      return 'Potential health issue detected. Consider pulling over safely.\nAn emergency has been sent to the emergency contact.';
     }
     return '';
   };
-  
+
   return (
-    <Animated.View 
+    <Animated.View
       style={[
-        styles.card, 
-        animatedStyle, 
+        styles.card,
+        animatedStyle,
         { backgroundColor: getAlertBgColor() }
       ]}
     >
@@ -74,21 +98,15 @@ export default function AlertCard({ type, onDismiss, onMoreInfo }: AlertCardProp
           <X size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-      
+
       <Text style={styles.description}>{getAlertDescription()}</Text>
-      
+
       <View style={styles.actions}>
-        <TouchableOpacity 
-          style={styles.dismissButton} 
-          onPress={onDismiss}
-        >
+        <TouchableOpacity style={styles.dismissButton} onPress={onDismiss}>
           <Text style={styles.dismissText}>Dismiss</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.infoButton} 
-          onPress={onMoreInfo}
-        >
+
+        <TouchableOpacity style={styles.infoButton} onPress={onMoreInfo}>
           <InfoIcon size={16} color="#FFFFFF" />
           <Text style={styles.infoText}>More Info</Text>
         </TouchableOpacity>
