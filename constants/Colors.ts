@@ -1,0 +1,26 @@
+export default {
+  light: {
+    primary: '#0066FF',
+    secondary: '#14B8A6',
+    success: '#34C759',
+    warning: '#FF9500',
+    error: '#FF3B30',
+    background: '#F7F8FA',
+    card: '#FFFFFF',
+    text: '#1F2937',
+    border: '#E5E7EB',
+    notification: '#FF3B30',
+  },
+  dark: {
+    primary: '#2D8CFF',
+    secondary: '#14B8A6',
+    success: '#34C759',
+    warning: '#FF9500',
+    error: '#FF3B30',
+    background: '#1A1A1A',
+    card: '#2A2A2A',
+    text: '#F3F4F6',
+    border: '#374151',
+    notification: '#FF3B30',
+  },
+};
